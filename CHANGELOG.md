@@ -1,4 +1,229 @@
+# v1.13.2
+
+## Release v1.13.2 - 2021/07/12
+
+### Enhancement
+
+* fluent-plugin-generate: Storage plugin was supported.
+  https://github.com/fluent/fluentd/pull/3426
+* parser_json: Added support to customize configuration of oj options.
+  Use `FLUENT_OJ_OPTION_BIGDECIMAL_LOAD`, `FLUENT_OJ_OPTION_MAX_NESTING`,
+  `FLUENT_OJ_OPTION_MODE`, and `FLUENT_OJ_OPTION_USE_TO_JSON` environment
+  variable to configure it.
+  https://github.com/fluent/fluentd/pull/3315
+
+### Bug fix
+
+* binlog_reader: Fixed a crash bug by missing "fluent/env" dependency.
+  https://github.com/fluent/fluentd/pull/3443
+* Fixed a crash bug on outputting log at the early stage when parsing
+  config file.  This is a regression since v1.13.0. If you use invalid
+  '@' prefix parameter, remove it as a workaround.
+  https://github.com/fluent/fluentd/pull/3451
+* in_tail: Fixed a bug that when rotation is occurred, remaining lines
+  will be discarded if the throttling feature is enabled.
+  https://github.com/fluent/fluentd/pull/3390
+* fluent-plugin-generate: Fixed a crash bug during gemspec generation.
+  It was unexpectedly introduced by #3305, thus this bug was a
+  regression since 1.12.3.
+  https://github.com/fluent/fluentd/pull/3444
+
+### Misc
+
+* Fixed the runtime dependency version of http_parse.rb to 0.7.0.
+  It was fixed because false positive detection is occurred frequently
+  by security scanning tools.
+  https://github.com/fluent/fluentd/pull/3450
+
+# v1.13.1
+
+## Release v1.13.1 - 2021/06/25
+
+### Bug fix
+
+* out_forward: Fixed a race condition on handshake
+  It's caused by using a same unpacker from multiple threads.
+  https://github.com/fluent/fluentd/pull/3405
+  https://github.com/fluent/fluentd/pull/3406
+* in_tail: Fixed to remove too much verbose debugging logs
+  It was unexpectedly introduced by #3185 log throttling feature.
+  https://github.com/fluent/fluentd/pull/3418
+* Fixed not to echo back the provides path as is on a 404 error
+  There was a potential cross-site scripting vector even though
+  it is quite difficult to exploit.
+  https://github.com/fluent/fluentd/pull/3427
+
+### Misc
+
+* Pretty print for Fluent::Config::Section has been supported
+  for debugging
+  https://github.com/fluent/fluentd/pull/3398
+* CI: Dropped to run CI for Ruby 2.5
+  https://github.com/fluent/fluentd/pull/3412
+
+# v1.13
+
+## Release v1.13.0 - 2021/05/29
+
+### Enhancement
+
+* in_tail: Handle log throttling per file feature
+  https://github.com/fluent/fluentd/pull/3185
+  https://github.com/fluent/fluentd/pull/3364
+  https://github.com/fluent/fluentd/pull/3379
+* Extend to support service discovery manager in simpler way
+  https://github.com/fluent/fluentd/pull/3299
+  https://github.com/fluent/fluentd/pull/3362
+* in_http: HTTP GET requests has been supported
+  https://github.com/fluent/fluentd/pull/3373
+* The log rotate settings in system configuration has been supported
+  https://github.com/fluent/fluentd/pull/3352
+
+### Bug fix
+
+* Fix to disable `trace_instruction` when
+  `RubyVM::InstructionSequence` is available. It improves
+  compatibility with `truffleruby` some extent.
+  https://github.com/fluent/fluentd/pull/3376
+* in_tail: Safely skip files which are used by another process on
+  Windows. It improves exception handling about
+  `ERROR_SHARING_VIOLATION` on Windows.
+  https://github.com/fluent/fluentd/pull/3378
+* fluent-cat: the issue resending secondary file in specific format
+  has been fixed
+  https://github.com/fluent/fluentd/pull/3368
+* in_tail: Shutdown immediately & safely even if reading huge files
+  Note that `skip_refresh_on_startup` must be enabled.
+  https://github.com/fluent/fluentd/pull/3380
+
+### Misc
+
+* example: Change a path to backup_path in counter_server correctly
+  https://github.com/fluent/fluentd/pull/3359
+* README: Update link to community forum to discuss.fluentd.org
+  https://github.com/fluent/fluentd/pull/3360
+
 # v1.12
+
+## Release v1.12.4 - 2021/05/26
+
+### Bug fix
+
+* in_tail: Fix a bug that refresh_watcher fails to handle file rotations
+
+## Release v1.12.3 - 2021/04/23
+
+### Enhancement
+
+* plugin_helper: Allow TLS to use keep-alive socket option
+  https://github.com/fluent/fluentd/pull/3308
+
+### Bug fix
+
+* parser_csv, parser_syslog: Fix a naming conflict on parser_type
+  https://github.com/fluent/fluentd/pull/3302
+* in_tail: Fix incorrect error code & message on Windows
+  https://github.com/fluent/fluentd/pull/3325
+  https://github.com/fluent/fluentd/pull/3329
+  https://github.com/fluent/fluentd/pull/3331
+  https://github.com/fluent/fluentd/pull/3337
+* in_tail: Fix a crash bug on catching a short-lived log
+  https://github.com/fluent/fluentd/pull/3328
+* storage_local: Fix position file corruption issue on concurrent gracefulReloads
+  https://github.com/fluent/fluentd/pull/3335
+* Fix incorrect warnings about ${chunk_id} with out_s3
+  https://github.com/fluent/fluentd/pull/3339
+* TLS Server: Add peer information to error log message
+  https://github.com/fluent/fluentd/pull/3330
+
+### Misc
+
+* fluent-plugin-generate: add note about plugin name
+  https://github.com/fluent/fluentd/pull/3303
+* fluent-plugin-generate: Use same depended gem version with fluentd
+  https://github.com/fluent/fluentd/pull/3305
+* Fix some broken unit tests and improve CI's stability
+  https://github.com/fluent/fluentd/pull/3304
+  https://github.com/fluent/fluentd/pull/3307
+  https://github.com/fluent/fluentd/pull/3312
+  https://github.com/fluent/fluentd/pull/3313
+  https://github.com/fluent/fluentd/pull/3314
+  https://github.com/fluent/fluentd/pull/3316
+  https://github.com/fluent/fluentd/pull/3336
+* Permit to install with win32-service 2.2.0 on Windows
+  https://github.com/fluent/fluentd/pull/3343
+
+## Release v1.12.2 - 2021/03/29
+
+### Enhancement
+
+* out_copy: Add ignore_if_prev_successes
+  https://github.com/fluent/fluentd/pull/3190
+  https://github.com/fluent/fluentd/pull/3287
+* Support multiple kind of timestamp format
+  https://github.com/fluent/fluentd/pull/3252
+* formatter_ltsv: suppress delimiters in output
+  https://github.com/fluent/fluentd/pull/1666
+  https://github.com/fluent/fluentd/pull/3288
+  https://github.com/fluent/fluentd/pull/3289
+
+### Bug fix
+
+* in_tail: Expect ENOENT during stat
+  https://github.com/fluent/fluentd/pull/3275
+* out_forward: Prevent transferring duplicate logs on restart
+  https://github.com/fluent/fluentd/pull/3267
+  https://github.com/fluent/fluentd/pull/3285
+* in_tail: Handle to send rotated logs when mv is used for rotating
+  https://github.com/fluent/fluentd/pull/3294
+* fluent-plugin-config-format: Fill an uninitialized instance variable
+  https://github.com/fluent/fluentd/pull/3297
+* Fix MessagePackEventStream issue with Enumerable methods
+  https://github.com/fluent/fluentd/pull/2116
+
+### Misc
+
+* Add webrick to support Ruby 3.0
+  https://github.com/fluent/fluentd/pull/3257
+* Suggest Discource instead of Google Groups
+  https://github.com/fluent/fluentd/pull/3261
+* Update MAINTAINERS.md
+  https://github.com/fluent/fluentd/pull/3282
+* Introduce DeepSource to check code quality
+  https://github.com/fluent/fluentd/pull/3286
+  https://github.com/fluent/fluentd/pull/3259
+  https://github.com/fluent/fluentd/pull/3291
+* Migrate to GitHub Actions and stabilize tests
+  https://github.com/fluent/fluentd/pull/3266
+  https://github.com/fluent/fluentd/pull/3268
+  https://github.com/fluent/fluentd/pull/3281
+  https://github.com/fluent/fluentd/pull/3283
+  https://github.com/fluent/fluentd/pull/3290
+
+## Release v1.12.1 - 2021/02/18
+
+### Enhancement
+
+* out_http: Add `headers_from_placeholders` parameter
+  https://github.com/fluent/fluentd/pull/3241
+* fluent-plugin-config-format: Add `--table` option to use markdown table
+  https://github.com/fluent/fluentd/pull/3240
+* Add `--disable-shared-socket`/`disable_shared_socket` to disable ServerEngine's shared socket setup
+  https://github.com/fluent/fluentd/pull/3250
+
+### Bug fix
+
+* ca_generate: Fix creating TLS certification files which include broken extensions
+  https://github.com/fluent/fluentd/pull/3246
+* test: Drop TLS 1.1 tests
+  https://github.com/fluent/fluentd/pull/3256
+* Remove old gem constraints to support Ruby 3
+
+### Misc
+
+* Use GitHub Actions
+  https://github.com/fluent/fluentd/pull/3233
+  https://github.com/fluent/fluentd/pull/3255
 
 ## Release v1.12.0 - 2021/01/05
 

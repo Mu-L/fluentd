@@ -14,9 +14,8 @@ class ServerPluginHelperTest < Test::Unit::TestCase
 
   TMP_DIR = File.expand_path(File.dirname(__FILE__) + "/../tmp/plugin_helper_server")
 
-  PORT = unused_port
-
   setup do
+    @port = unused_port
     @socket_manager_path = ServerEngine::SocketManager::Server.generate_path
     if @socket_manager_path.is_a?(String) && File.exist?(@socket_manager_path)
       FileUtils.rm_f @socket_manager_path
@@ -75,16 +74,16 @@ class ServerPluginHelperTest < Test::Unit::TestCase
     data(methods)
     test 'raise error if title is not specified or not a symbol' do |m|
       assert_raise(ArgumentError.new("BUG: title must be a symbol")) do
-        @d.__send__(m, nil, PORT){|x| x }
+        @d.__send__(m, nil, @port){|x| x }
       end
       assert_raise(ArgumentError.new("BUG: title must be a symbol")) do
-        @d.__send__(m, "", PORT){|x| x }
+        @d.__send__(m, "", @port){|x| x }
       end
       assert_raise(ArgumentError.new("BUG: title must be a symbol")) do
-        @d.__send__(m, "title", PORT){|x| x }
+        @d.__send__(m, "title", @port){|x| x }
       end
       assert_nothing_raised do
-        @d.__send__(m, :myserver, PORT){|x| x }
+        @d.__send__(m, :myserver, @port){|x| x }
       end
     end
 
@@ -100,30 +99,30 @@ class ServerPluginHelperTest < Test::Unit::TestCase
         @d.__send__(m, :myserver, 1.5){|x| x }
       end
       assert_nothing_raised do
-        @d.__send__(m, :myserver, PORT){|x| x }
+        @d.__send__(m, :myserver, @port){|x| x }
       end
     end
 
     data(methods)
     test 'raise error if block is not specified' do |m|
       assert_raise(ArgumentError) do
-        @d.__send__(m, :myserver, PORT)
+        @d.__send__(m, :myserver, @port)
       end
       assert_nothing_raised do
-        @d.__send__(m, :myserver, PORT){|x| x }
+        @d.__send__(m, :myserver, @port){|x| x }
       end
     end
 
     data(methods)
     test 'creates tcp server, binds 0.0.0.0 in default' do |m|
-      @d.__send__(m, :myserver, PORT){|x| x }
+      @d.__send__(m, :myserver, @port){|x| x }
 
       assert_equal 1, @d._servers.size
 
       created_server_info = @d._servers.first
 
       assert_equal :myserver, created_server_info.title
-      assert_equal PORT, created_server_info.port
+      assert_equal @port, created_server_info.port
 
       assert_equal :tcp, created_server_info.proto
       assert_equal "0.0.0.0", created_server_info.bind
@@ -136,7 +135,7 @@ class ServerPluginHelperTest < Test::Unit::TestCase
 
     data(methods)
     test 'creates tcp server if specified in proto' do |m|
-      @d.__send__(m, :myserver, PORT, proto: :tcp){|x| x }
+      @d.__send__(m, :myserver, @port, proto: :tcp){|x| x }
 
       created_server_info = @d._servers.first
       assert_equal :tcp, created_server_info.proto
@@ -152,7 +151,7 @@ class ServerPluginHelperTest < Test::Unit::TestCase
       d.start
       d.after_start
 
-      d.__send__(m, :myserver, PORT){|x| x }
+      d.__send__(m, :myserver, @port){|x| x }
 
       created_server_info = @d._servers.first
       assert_equal :tcp, created_server_info.proto
@@ -163,9 +162,9 @@ class ServerPluginHelperTest < Test::Unit::TestCase
     data(methods)
     test 'creates tls server if specified in proto' do |m|
       assert_raise(ArgumentError.new("BUG: TLS transport specified, but certification options are not specified")) do
-        @d.__send__(m, :myserver, PORT, proto: :tls){|x| x }
+        @d.__send__(m, :myserver, @port, proto: :tls){|x| x }
       end
-      @d.__send__(m, :myserver, PORT, proto: :tls, tls_options: {insecure: true}){|x| x }
+      @d.__send__(m, :myserver, @port, proto: :tls, tls_options: {insecure: true}){|x| x }
 
       created_server_info = @d._servers.first
       assert_equal :tls, created_server_info.proto
@@ -181,7 +180,7 @@ class ServerPluginHelperTest < Test::Unit::TestCase
       d.start
       d.after_start
 
-      d.__send__(m, :myserver, PORT){|x| x }
+      d.__send__(m, :myserver, @port){|x| x }
 
       created_server_info = @d._servers.first
       assert_equal :tls, created_server_info.proto
@@ -197,7 +196,7 @@ class ServerPluginHelperTest < Test::Unit::TestCase
     data(methods)
     test 'raise error if unknown protocol specified' do |m|
       assert_raise(ArgumentError.new("BUG: invalid protocol name")) do
-        @d.__send__(m, :myserver, PORT, proto: :quic){|x| x }
+        @d.__send__(m, :myserver, @port, proto: :quic){|x| x }
       end
     end
 
@@ -211,10 +210,10 @@ class ServerPluginHelperTest < Test::Unit::TestCase
     )
     test 'raise error if udp options specified for tcp/tls/unix' do |(m, proto)|
       assert_raise ArgumentError do
-        @d.__send__(m, :myserver, PORT, proto: proto, max_bytes: 128){|x| x }
+        @d.__send__(m, :myserver, @port, proto: proto, max_bytes: 128){|x| x }
       end
       assert_raise ArgumentError do
-        @d.__send__(m, :myserver, PORT, proto: proto, flags: 1){|x| x }
+        @d.__send__(m, :myserver, @port, proto: proto, flags: 1){|x| x }
       end
     end
 
@@ -223,7 +222,7 @@ class ServerPluginHelperTest < Test::Unit::TestCase
     )
     test 'raise error if tcp/tls options specified for udp' do |(m, proto)|
       assert_raise(ArgumentError.new("BUG: linger_timeout is available for tcp/tls")) do
-        @d.__send__(m, :myserver, PORT, proto: proto, linger_timeout: 1, max_bytes: 128){|x| x }
+        @d.__send__(m, :myserver, @port, proto: proto, linger_timeout: 1, max_bytes: 128){|x| x }
       end
     end
 
@@ -232,10 +231,16 @@ class ServerPluginHelperTest < Test::Unit::TestCase
     )
     test 'raise error if tcp/tls/unix backlog options specified for udp' do |(m, proto)|
       assert_raise(ArgumentError.new("BUG: backlog is available for tcp/tls")) do
-        @d.__send__(m, :myserver, PORT, proto: proto, backlog: 500){|x| x }
+        @d.__send__(m, :myserver, @port, proto: proto, backlog: 500){|x| x }
       end
-      assert_raise(ArgumentError.new("BUG: send_keepalive_packet is available for tcp")) do
-        @d.__send__(m, :myserver, PORT, proto: proto, send_keepalive_packet: true){|x| x }
+    end
+
+    data(
+      'server_create udp' => [:server_create, :udp],
+    )
+    test 'raise error if tcp/tls send_keepalive_packet option is specified for udp' do |(m, proto)|
+      assert_raise(ArgumentError.new("BUG: send_keepalive_packet is available for tcp/tls")) do
+        @d.__send__(m, :myserver, @port, proto: proto, send_keepalive_packet: true){|x| x }
       end
     end
 
@@ -248,7 +253,7 @@ class ServerPluginHelperTest < Test::Unit::TestCase
     )
     test 'raise error if tls options specified for tcp/udp/unix' do |(m, proto, kwargs)|
       assert_raise(ArgumentError.new("BUG: tls_options is available only for tls")) do
-        @d.__send__(m, :myserver, PORT, proto: proto, tls_options: {}, **kwargs){|x| x }
+        @d.__send__(m, :myserver, @port, proto: proto, tls_options: {}, **kwargs){|x| x }
       end
     end
 
@@ -260,7 +265,7 @@ class ServerPluginHelperTest < Test::Unit::TestCase
       'server_create_connection tls' => [:server_create_connection, :tls, {tls_options: {insecure: true}}],
     )
     test 'can bind specified IPv4 address' do |(m, proto, kwargs)|
-      @d.__send__(m, :myserver, PORT, proto: proto, bind: "127.0.0.1", **kwargs){|x| x }
+      @d.__send__(m, :myserver, @port, proto: proto, bind: "127.0.0.1", **kwargs){|x| x }
       assert_equal "127.0.0.1", @d._servers.first.bind
       assert_equal "127.0.0.1", @d._servers.first.server.instance_eval{ instance_variable_defined?(:@listen_socket) ? @listen_socket : @_io }.addr[3]
     end
@@ -274,7 +279,7 @@ class ServerPluginHelperTest < Test::Unit::TestCase
     )
     test 'can bind specified IPv6 address' do |(m, proto, kwargs)| # if available
       omit "IPv6 unavailable here" unless ipv6_enabled?
-      @d.__send__(m, :myserver, PORT, proto: proto, bind: "::1", **kwargs){|x| x }
+      @d.__send__(m, :myserver, @port, proto: proto, bind: "::1", **kwargs){|x| x }
       assert_equal "::1", @d._servers.first.bind
       assert_equal "::1", @d._servers.first.server.instance_eval{ instance_variable_defined?(:@listen_socket) ? @listen_socket : @_io }.addr[3]
     end
@@ -293,8 +298,8 @@ class ServerPluginHelperTest < Test::Unit::TestCase
         d2 = Dummy.new; d2.start; d2.after_start
 
         assert_nothing_raised do
-          @d.__send__(m, :myserver, PORT, proto: proto, **kwargs){|x| x }
-          d2.__send__(m, :myserver, PORT, proto: proto, **kwargs){|x| x }
+          @d.__send__(m, :myserver, @port, proto: proto, **kwargs){|x| x }
+          d2.__send__(m, :myserver, @port, proto: proto, **kwargs){|x| x }
         end
       ensure
         d2.stop; d2.before_shutdown; d2.shutdown; d2.after_shutdown; d2.close; d2.terminate
@@ -317,10 +322,10 @@ class ServerPluginHelperTest < Test::Unit::TestCase
         d2 = Dummy.new; d2.start; d2.after_start
 
         assert_nothing_raised do
-          @d.__send__(m, :myserver, PORT, proto: proto, shared: false, **kwargs){|x| x }
+          @d.__send__(m, :myserver, @port, proto: proto, shared: false, **kwargs){|x| x }
         end
         assert_raise(Errno::EADDRINUSE, Errno::EACCES) do
-          d2.__send__(m, :myserver, PORT, proto: proto, **kwargs){|x| x }
+          d2.__send__(m, :myserver, @port, proto: proto, **kwargs){|x| x }
         end
       ensure
         d2.stop; d2.before_shutdown; d2.shutdown; d2.after_shutdown; d2.close; d2.terminate
@@ -337,15 +342,15 @@ class ServerPluginHelperTest < Test::Unit::TestCase
     )
     test 'raise error if block argument is not specified or too many' do |(proto, kwargs)|
       assert_raise(ArgumentError.new("BUG: block must have 1 or 2 arguments")) do
-        @d.server_create(:myserver, PORT, proto: proto, **kwargs){ 1 }
+        @d.server_create(:myserver, @port, proto: proto, **kwargs){ 1 }
       end
       assert_raise(ArgumentError.new("BUG: block must have 1 or 2 arguments")) do
-        @d.server_create(:myserver, PORT, proto: proto, **kwargs){|sock, conn, what_is_this| 1 }
+        @d.server_create(:myserver, @port, proto: proto, **kwargs){|sock, conn, what_is_this| 1 }
       end
     end
 
     test 'creates udp server if specified in proto' do
-      @d.server_create(:myserver, PORT, proto: :udp, max_bytes: 512){|x| x }
+      @d.server_create(:myserver, @port, proto: :udp, max_bytes: 512){|x| x }
 
       created_server_info = @d._servers.first
       assert_equal :udp, created_server_info.proto
@@ -357,7 +362,7 @@ class ServerPluginHelperTest < Test::Unit::TestCase
   sub_test_case '#server_create_tcp' do
     test 'can accept all keyword arguments valid for tcp server' do
       assert_nothing_raised do
-        @d.server_create_tcp(:s, PORT, bind: '127.0.0.1', shared: false, resolve_name: true, linger_timeout: 10, backlog: 500, send_keepalive_packet: true) do |data, conn|
+        @d.server_create_tcp(:s, @port, bind: '127.0.0.1', shared: false, resolve_name: true, linger_timeout: 10, backlog: 500, send_keepalive_packet: true) do |data, conn|
           # ...
         end
       end
@@ -365,11 +370,11 @@ class ServerPluginHelperTest < Test::Unit::TestCase
 
     test 'creates a tcp server just to read data' do
       received = ""
-      @d.server_create_tcp(:s, PORT) do |data|
+      @d.server_create_tcp(:s, @port) do |data|
         received << data
       end
       3.times do
-        sock = TCPSocket.new("127.0.0.1", PORT)
+        sock = TCPSocket.new("127.0.0.1", @port)
         sock.puts "yay"
         sock.puts "foo"
         sock.close
@@ -381,12 +386,12 @@ class ServerPluginHelperTest < Test::Unit::TestCase
     test 'creates a tcp server to read and write data' do
       received = ""
       responses = []
-      @d.server_create_tcp(:s, PORT) do |data, conn|
+      @d.server_create_tcp(:s, @port) do |data, conn|
         received << data
         conn.write "ack\n"
       end
       3.times do
-        TCPSocket.open("127.0.0.1", PORT) do |sock|
+        TCPSocket.open("127.0.0.1", @port) do |sock|
           sock.puts "yay"
           sock.puts "foo"
           responses << sock.readline
@@ -402,12 +407,12 @@ class ServerPluginHelperTest < Test::Unit::TestCase
 
       received = ""
       responses = []
-      @d.server_create_tcp(:s, PORT, bind: "::1") do |data, conn|
+      @d.server_create_tcp(:s, @port, bind: "::1") do |data, conn|
         received << data
         conn.write "ack\n"
       end
       3.times do
-        TCPSocket.open("::1", PORT) do |sock|
+        TCPSocket.open("::1", @port) do |sock|
           sock.puts "yay"
           sock.puts "foo"
           responses << sock.readline
@@ -421,12 +426,12 @@ class ServerPluginHelperTest < Test::Unit::TestCase
     test 'does not resolve name of client address in default' do
       received = ""
       sources = []
-      @d.server_create_tcp(:s, PORT) do |data, conn|
+      @d.server_create_tcp(:s, @port) do |data, conn|
         received << data
         sources << conn.remote_host
       end
       3.times do
-        TCPSocket.open("127.0.0.1", PORT) do |sock|
+        TCPSocket.open("127.0.0.1", @port) do |sock|
           sock.puts "yay"
         end
       end
@@ -440,12 +445,12 @@ class ServerPluginHelperTest < Test::Unit::TestCase
 
       received = ""
       sources = []
-      @d.server_create_tcp(:s, PORT, resolve_name: true) do |data, conn|
+      @d.server_create_tcp(:s, @port, resolve_name: true) do |data, conn|
         received << data
         sources << conn.remote_host
       end
       3.times do
-        TCPSocket.open("127.0.0.1", PORT) do |sock|
+        TCPSocket.open("127.0.0.1", @port) do |sock|
           sock.puts "yay"
         end
       end
@@ -461,7 +466,7 @@ class ServerPluginHelperTest < Test::Unit::TestCase
     test 'raises error if plugin registers data callback for connection object from #server_create' do
       received = ""
       errors = []
-      @d.server_create_tcp(:s, PORT) do |data, conn|
+      @d.server_create_tcp(:s, @port) do |data, conn|
         received << data
         begin
           conn.data{|d| received << d.upcase }
@@ -469,7 +474,7 @@ class ServerPluginHelperTest < Test::Unit::TestCase
           errors << e
         end
       end
-      TCPSocket.open("127.0.0.1", PORT) do |sock|
+      TCPSocket.open("127.0.0.1", @port) do |sock|
         sock.puts "foo"
       end
       waiting(10){ sleep 0.1 until received.bytesize == 4 || errors.size == 1 }
@@ -483,7 +488,7 @@ class ServerPluginHelperTest < Test::Unit::TestCase
       lines = []
       responses = []
       response_completes = []
-      @d.server_create_tcp(:s, PORT) do |data, conn|
+      @d.server_create_tcp(:s, @port) do |data, conn|
         conn.on(:write_complete){|c| response_completes << true }
         buffer << data
         if idx = buffer.index("\n")
@@ -492,7 +497,7 @@ class ServerPluginHelperTest < Test::Unit::TestCase
         end
       end
       3.times do
-        TCPSocket.open("127.0.0.1", PORT) do |sock|
+        TCPSocket.open("127.0.0.1", @port) do |sock|
           sock.write "yay"
           sock.write "foo\n"
           begin
@@ -513,7 +518,7 @@ class ServerPluginHelperTest < Test::Unit::TestCase
       buffer = ""
       lines = []
       callback_results = []
-      @d.server_create_tcp(:s, PORT) do |data, conn|
+      @d.server_create_tcp(:s, @port) do |data, conn|
         conn.on(:close){|c| callback_results << "closed" }
         buffer << data
         if idx = buffer.index("\n")
@@ -522,7 +527,7 @@ class ServerPluginHelperTest < Test::Unit::TestCase
         end
       end
       3.times do
-        TCPSocket.open("127.0.0.1", PORT) do |sock|
+        TCPSocket.open("127.0.0.1", @port) do |sock|
           sock.write "yay"
           sock.write "foo\n"
           begin
@@ -545,10 +550,10 @@ class ServerPluginHelperTest < Test::Unit::TestCase
       omit "IPv6 unavailable here" unless ipv6_enabled?
 
       assert_nothing_raised do
-        @d.server_create_tcp(:s_ipv4, PORT, bind: '0.0.0.0', shared: false) do |data, conn|
+        @d.server_create_tcp(:s_ipv4, @port, bind: '0.0.0.0', shared: false) do |data, conn|
           # ...
         end
-        @d.server_create_tcp(:s_ipv6, PORT, bind: '::', shared: false) do |data, conn|
+        @d.server_create_tcp(:s_ipv6, @port, bind: '::', shared: false) do |data, conn|
           # ...
         end
       end
@@ -558,7 +563,7 @@ class ServerPluginHelperTest < Test::Unit::TestCase
   sub_test_case '#server_create_udp' do
     test 'can accept all keyword arguments valid for udp server' do
       assert_nothing_raised do
-        @d.server_create_udp(:s, PORT, bind: '127.0.0.1', shared: false, resolve_name: true, max_bytes: 100, flags: 1) do |data, conn|
+        @d.server_create_udp(:s, @port, bind: '127.0.0.1', shared: false, resolve_name: true, max_bytes: 100, flags: 1) do |data, conn|
           # ...
         end
       end
@@ -566,14 +571,14 @@ class ServerPluginHelperTest < Test::Unit::TestCase
 
     test 'creates a udp server just to read data' do
       received = ""
-      @d.server_create_udp(:s, PORT, max_bytes: 128) do |data|
+      @d.server_create_udp(:s, @port, max_bytes: 128) do |data|
         received << data
       end
       bind_port = unused_port(protocol: :udp, bind: "127.0.0.1")
       3.times do
         sock = UDPSocket.new(Socket::AF_INET)
         sock.bind("127.0.0.1", bind_port)
-        sock.connect("127.0.0.1", PORT)
+        sock.connect("127.0.0.1", @port)
         sock.puts "yay"
         sock.puts "foo"
         sock.close
@@ -585,7 +590,7 @@ class ServerPluginHelperTest < Test::Unit::TestCase
     test 'creates a udp server to read and write data' do
       received = ""
       responses = []
-      @d.server_create_udp(:s, PORT, max_bytes: 128) do |data, sock|
+      @d.server_create_udp(:s, @port, max_bytes: 128) do |data, sock|
         received << data
         sock.write "ack\n"
       end
@@ -594,7 +599,7 @@ class ServerPluginHelperTest < Test::Unit::TestCase
         begin
           sock = UDPSocket.new(Socket::AF_INET)
           sock.bind("127.0.0.1", bind_port)
-          sock.connect("127.0.0.1", PORT)
+          sock.connect("127.0.0.1", @port)
           th = Thread.new do
             while true
               begin
@@ -625,7 +630,7 @@ class ServerPluginHelperTest < Test::Unit::TestCase
 
       received = ""
       responses = []
-      @d.server_create_udp(:s, PORT, bind: "::1", max_bytes: 128) do |data, sock|
+      @d.server_create_udp(:s, @port, bind: "::1", max_bytes: 128) do |data, sock|
         received << data
         sock.write "ack\n"
       end
@@ -638,7 +643,7 @@ class ServerPluginHelperTest < Test::Unit::TestCase
             responses << sock.recv(16)
             true
           end
-          sock.connect("::1", PORT)
+          sock.connect("::1", @port)
           sock.write "yay\nfoo\n"
           th.join(5)
         ensure
@@ -653,13 +658,13 @@ class ServerPluginHelperTest < Test::Unit::TestCase
     test 'does not resolve name of client address in default' do
       received = ""
       sources = []
-      @d.server_create_udp(:s, PORT, max_bytes: 128) do |data, sock|
+      @d.server_create_udp(:s, @port, max_bytes: 128) do |data, sock|
         received << data
         sources << sock.remote_host
       end
       3.times do
         sock = UDPSocket.new(Socket::AF_INET)
-        sock.connect("127.0.0.1", PORT)
+        sock.connect("127.0.0.1", @port)
         sock.puts "yay"
         sock.close
       end
@@ -673,13 +678,13 @@ class ServerPluginHelperTest < Test::Unit::TestCase
 
       received = ""
       sources = []
-      @d.server_create_udp(:s, PORT, resolve_name: true, max_bytes: 128) do |data, sock|
+      @d.server_create_udp(:s, @port, resolve_name: true, max_bytes: 128) do |data, sock|
         received << data
         sources << sock.remote_host
       end
       3.times do
         sock = UDPSocket.new(Socket::AF_INET)
-        sock.connect("127.0.0.1", PORT)
+        sock.connect("127.0.0.1", @port)
         sock.puts "yay"
         sock.close
       end
@@ -691,7 +696,7 @@ class ServerPluginHelperTest < Test::Unit::TestCase
     test 'raises error if plugin registers data callback for connection object from #server_create' do
       received = ""
       errors = []
-      @d.server_create_udp(:s, PORT, max_bytes: 128) do |data, sock|
+      @d.server_create_udp(:s, @port, max_bytes: 128) do |data, sock|
         received << data
         begin
           sock.data{|d| received << d.upcase }
@@ -700,7 +705,7 @@ class ServerPluginHelperTest < Test::Unit::TestCase
         end
       end
       sock = UDPSocket.new(Socket::AF_INET)
-      sock.connect("127.0.0.1", PORT)
+      sock.connect("127.0.0.1", @port)
       sock.write "foo\n"
       sock.close
 
@@ -713,7 +718,7 @@ class ServerPluginHelperTest < Test::Unit::TestCase
     test 'raise error if plugin registers write_complete callback for udp' do
       received = ""
       errors = []
-      @d.server_create_udp(:s, PORT, max_bytes: 128) do |data, sock|
+      @d.server_create_udp(:s, @port, max_bytes: 128) do |data, sock|
         received << data
         begin
           sock.on(:write_complete){|conn| "" }
@@ -722,7 +727,7 @@ class ServerPluginHelperTest < Test::Unit::TestCase
         end
       end
       sock = UDPSocket.new(Socket::AF_INET)
-      sock.connect("127.0.0.1", PORT)
+      sock.connect("127.0.0.1", @port)
       sock.write "foo\n"
       sock.close
 
@@ -735,7 +740,7 @@ class ServerPluginHelperTest < Test::Unit::TestCase
     test 'raises error if plugin registers close callback for udp' do
       received = ""
       errors = []
-      @d.server_create_udp(:s, PORT, max_bytes: 128) do |data, sock|
+      @d.server_create_udp(:s, @port, max_bytes: 128) do |data, sock|
         received << data
         begin
           sock.on(:close){|d| "" }
@@ -744,7 +749,7 @@ class ServerPluginHelperTest < Test::Unit::TestCase
         end
       end
       sock = UDPSocket.new(Socket::AF_INET)
-      sock.connect("127.0.0.1", PORT)
+      sock.connect("127.0.0.1", @port)
       sock.write "foo\n"
       sock.close
 
@@ -758,10 +763,10 @@ class ServerPluginHelperTest < Test::Unit::TestCase
       omit "IPv6 unavailable here" unless ipv6_enabled?
 
       assert_nothing_raised do
-        @d.server_create_udp(:s_ipv4_udp, PORT, bind: '0.0.0.0', shared: false, max_bytes: 128) do |data, sock|
+        @d.server_create_udp(:s_ipv4_udp, @port, bind: '0.0.0.0', shared: false, max_bytes: 128) do |data, sock|
           # ...
         end
-        @d.server_create_udp(:s_ipv6_udp, PORT, bind: '::', shared: false, max_bytes: 128) do |data, sock|
+        @d.server_create_udp(:s_ipv6_udp, @port, bind: '::', shared: false, max_bytes: 128) do |data, sock|
           # ...
         end
       end
@@ -923,16 +928,16 @@ class ServerPluginHelperTest < Test::Unit::TestCase
         }
 
         received = ""
-        @d.server_create_tls(:s, PORT, tls_options: tls_options) do |data, conn|
+        @d.server_create_tls(:s, @port, tls_options: tls_options) do |data, conn|
           received << data
         end
         assert_raise "" do
-          open_tls_session('127.0.0.1', PORT) do |sock|
+          open_tls_session('127.0.0.1', @port) do |sock|
             sock.post_connection_check('myserver.testing.fluentd.org')
             # cannot connect ....
           end
         end
-        open_tls_session('127.0.0.1', PORT, verify: false) do |sock|
+        open_tls_session('127.0.0.1', @port, verify: false) do |sock|
           sock.puts "yay"
           sock.puts "foo"
         end
@@ -962,16 +967,16 @@ class ServerPluginHelperTest < Test::Unit::TestCase
         }
         tls_options[:private_key_passphrase] = private_key_passphrase if private_key_passphrase
         received = ""
-        @d.server_create_tls(:s, PORT, tls_options: tls_options) do |data, conn|
+        @d.server_create_tls(:s, @port, tls_options: tls_options) do |data, conn|
           received << data
         end
         assert_raise "" do
-          open_tls_session('127.0.0.1', PORT) do |sock|
+          open_tls_session('127.0.0.1', @port) do |sock|
             sock.post_connection_check('server.testing.fluentd.org')
             # cannot connect by failing verification without server cert
           end
         end
-        open_tls_session('127.0.0.1', PORT, cert_path: cert_path) do |sock|
+        open_tls_session('127.0.0.1', @port, cert_path: cert_path) do |sock|
           sock.puts "yay"
           sock.puts "foo"
         end
@@ -997,10 +1002,10 @@ class ServerPluginHelperTest < Test::Unit::TestCase
         }
         tls_options[:ca_private_key_passphrase] = ca_key_passphrase if ca_key_passphrase
         received = ""
-        @d.server_create_tls(:s, PORT, tls_options: tls_options) do |data, conn|
+        @d.server_create_tls(:s, @port, tls_options: tls_options) do |data, conn|
           received << data
         end
-        open_tls_session('127.0.0.1', PORT, cert_path: ca_cert_path) do |sock|
+        open_tls_session('127.0.0.1', @port, cert_path: ca_cert_path) do |sock|
           sock.puts "yay"
           sock.puts "foo"
         end
@@ -1036,10 +1041,10 @@ class ServerPluginHelperTest < Test::Unit::TestCase
         }
         tls_options[:private_key_passphrase] = private_key_passphrase if private_key_passphrase
         received = ""
-        @d.server_create_tls(:s, PORT, tls_options: tls_options) do |data, conn|
+        @d.server_create_tls(:s, @port, tls_options: tls_options) do |data, conn|
           received << data
         end
-        open_tls_session('127.0.0.1', PORT, cert_path: ca_cert_path) do |sock|
+        open_tls_session('127.0.0.1', @port, cert_path: ca_cert_path) do |sock|
           sock.puts "yay"
           sock.puts "foo"
         end
@@ -1066,10 +1071,10 @@ class ServerPluginHelperTest < Test::Unit::TestCase
         }
         tls_options[:private_key_passphrase] = private_key_passphrase if private_key_passphrase
         received = ""
-        @d.server_create_tls(:s, PORT, tls_options: tls_options) do |data, conn|
+        @d.server_create_tls(:s, @port, tls_options: tls_options) do |data, conn|
           received << data
         end
-        open_tls_session('127.0.0.1', PORT, cert_path: ca_cert_path) do |sock|
+        open_tls_session('127.0.0.1', @port, cert_path: ca_cert_path) do |sock|
           sock.puts "yay"
           sock.puts "foo"
         end
@@ -1090,16 +1095,16 @@ class ServerPluginHelperTest < Test::Unit::TestCase
         @d.configure(conf); @d.start; @d.after_start
 
         received = ""
-        @d.server_create_tls(:s, PORT) do |data, conn|
+        @d.server_create_tls(:s, @port) do |data, conn|
           received << data
         end
         assert_raise "" do
-          open_tls_session('127.0.0.1', PORT) do |sock|
+          open_tls_session('127.0.0.1', @port) do |sock|
             sock.post_connection_check('myserver.testing.fluentd.org')
             # cannot connect ....
           end
         end
-        open_tls_session('127.0.0.1', PORT, verify: false) do |sock|
+        open_tls_session('127.0.0.1', @port, verify: false) do |sock|
           sock.puts "yay"
           sock.puts "foo"
         end
@@ -1125,16 +1130,16 @@ class ServerPluginHelperTest < Test::Unit::TestCase
         @d.configure(conf); @d.start; @d.after_start
 
         received = ""
-        @d.server_create_tls(:s, PORT) do |data, conn|
+        @d.server_create_tls(:s, @port) do |data, conn|
           received << data
         end
         assert_raise "" do
-          open_tls_session('127.0.0.1', PORT) do |sock|
+          open_tls_session('127.0.0.1', @port) do |sock|
             sock.post_connection_check('server.testing.fluentd.org')
             # cannot connect by failing verification without server cert
           end
         end
-        open_tls_session('127.0.0.1', PORT, cert_path: cert_path) do |sock|
+        open_tls_session('127.0.0.1', @port, cert_path: cert_path) do |sock|
           sock.puts "yay"
           sock.puts "foo"
         end
@@ -1160,10 +1165,10 @@ class ServerPluginHelperTest < Test::Unit::TestCase
         @d.configure(conf); @d.start; @d.after_start
 
         received = ""
-        @d.server_create_tls(:s, PORT) do |data, conn|
+        @d.server_create_tls(:s, @port) do |data, conn|
           received << data
         end
-        open_tls_session('127.0.0.1', PORT, cert_path: ca_cert_path) do |sock|
+        open_tls_session('127.0.0.1', @port, cert_path: ca_cert_path) do |sock|
           sock.puts "yay"
           sock.puts "foo"
         end
@@ -1193,10 +1198,10 @@ class ServerPluginHelperTest < Test::Unit::TestCase
         @d.configure(conf); @d.start; @d.after_start
 
         received = ""
-        @d.server_create_tls(:s, PORT) do |data, conn|
+        @d.server_create_tls(:s, @port) do |data, conn|
           received << data
         end
-        open_tls_session('127.0.0.1', PORT, cert_path: ca_cert_path) do |sock|
+        open_tls_session('127.0.0.1', @port, cert_path: ca_cert_path) do |sock|
           sock.puts "yay"
           sock.puts "foo"
         end
@@ -1224,10 +1229,10 @@ class ServerPluginHelperTest < Test::Unit::TestCase
         @d.configure(conf); @d.start; @d.after_start
 
         received = ""
-        @d.server_create_tls(:s, PORT) do |data, conn|
+        @d.server_create_tls(:s, @port) do |data, conn|
           received << data
         end
-        open_tls_session('127.0.0.1', PORT, cert_path: ca_cert_path) do |sock|
+        open_tls_session('127.0.0.1', @port, cert_path: ca_cert_path) do |sock|
           sock.puts "yay"
           sock.puts "foo"
         end
@@ -1300,7 +1305,7 @@ class ServerPluginHelperTest < Test::Unit::TestCase
 
     test 'can accept all keyword arguments valid for tcp/tls server' do
       assert_nothing_raised do
-        @d.server_create_tls(:s, PORT, bind: '127.0.0.1', shared: false, resolve_name: true, linger_timeout: 10, backlog: 500, tls_options: @tls_options) do |data, conn|
+        @d.server_create_tls(:s, @port, bind: '127.0.0.1', shared: false, resolve_name: true, linger_timeout: 10, backlog: 500, tls_options: @tls_options, send_keepalive_packet: true) do |data, conn|
           # ...
         end
       end
@@ -1308,11 +1313,11 @@ class ServerPluginHelperTest < Test::Unit::TestCase
 
     test 'creates a tls server just to read data' do
       received = ""
-      @d.server_create_tls(:s, PORT, tls_options: @tls_options) do |data, conn|
+      @d.server_create_tls(:s, @port, tls_options: @tls_options) do |data, conn|
         received << data
       end
       3.times do
-        open_tls_session('127.0.0.1', PORT, cert_path: @cert_path) do |sock|
+        open_tls_session('127.0.0.1', @port, cert_path: @cert_path) do |sock|
           sock.puts "yay"
           sock.puts "foo"
         end
@@ -1325,13 +1330,13 @@ class ServerPluginHelperTest < Test::Unit::TestCase
     test 'creates a tls server to read and write data' do
       received = ""
       responses = []
-      @d.server_create_tls(:s, PORT, tls_options: @tls_options) do |data, conn|
+      @d.server_create_tls(:s, @port, tls_options: @tls_options) do |data, conn|
         received << data
         conn.write "ack\n"
       end
       3.times do
-        # open_tls_session('127.0.0.1', PORT, cert_path: @cert_path, hostname: @default_hostname) do |sock|
-        open_tls_session('127.0.0.1', PORT, cert_path: @cert_path) do |sock|
+        # open_tls_session('127.0.0.1', @port, cert_path: @cert_path, hostname: @default_hostname) do |sock|
+        open_tls_session('127.0.0.1', @port, cert_path: @cert_path) do |sock|
           sock.puts "yay"
           sock.puts "foo"
           responses << sock.readline
@@ -1348,13 +1353,13 @@ class ServerPluginHelperTest < Test::Unit::TestCase
 
       received = ""
       responses = []
-      @d.server_create_tls(:s, PORT, bind: "::1",  tls_options: @tls_options) do |data, conn|
+      @d.server_create_tls(:s, @port, bind: "::1",  tls_options: @tls_options) do |data, conn|
         received << data
         conn.write "ack\n"
       end
       3.times do
-        # open_tls_session('::1', PORT, cert_path: @cert_path, hostname: @default_hostname) do |sock|
-        open_tls_session('::1', PORT, cert_path: @cert_path) do |sock|
+        # open_tls_session('::1', @port, cert_path: @cert_path, hostname: @default_hostname) do |sock|
+        open_tls_session('::1', @port, cert_path: @cert_path) do |sock|
           sock.puts "yay"
           sock.puts "foo"
           responses << sock.readline
@@ -1369,13 +1374,13 @@ class ServerPluginHelperTest < Test::Unit::TestCase
     test 'does not resolve name of client address in default' do
       received = ""
       sources = []
-      @d.server_create_tls(:s, PORT, tls_options: @tls_options) do |data, conn|
+      @d.server_create_tls(:s, @port, tls_options: @tls_options) do |data, conn|
         received << data
         sources << conn.remote_host
       end
       3.times do
-        # open_tls_session('127.0.0.1', PORT, cert_path: @cert_path, hostname: @default_hostname) do |sock|
-        open_tls_session('127.0.0.1', PORT, cert_path: @cert_path) do |sock|
+        # open_tls_session('127.0.0.1', @port, cert_path: @cert_path, hostname: @default_hostname) do |sock|
+        open_tls_session('127.0.0.1', @port, cert_path: @cert_path) do |sock|
           sock.puts "yay"
         end
       end
@@ -1389,13 +1394,13 @@ class ServerPluginHelperTest < Test::Unit::TestCase
 
       received = ""
       sources = []
-      @d.server_create_tls(:s, PORT, resolve_name: true, tls_options: @tls_options) do |data, conn|
+      @d.server_create_tls(:s, @port, resolve_name: true, tls_options: @tls_options) do |data, conn|
         received << data
         sources << conn.remote_host
       end
       3.times do
-        # open_tls_session('127.0.0.1', PORT, cert_path: @cert_path, hostname: @default_hostname) do |sock|
-        open_tls_session('127.0.0.1', PORT, cert_path: @cert_path) do |sock|
+        # open_tls_session('127.0.0.1', @port, cert_path: @cert_path, hostname: @default_hostname) do |sock|
+        open_tls_session('127.0.0.1', @port, cert_path: @cert_path) do |sock|
           sock.puts "yay"
         end
       end
@@ -1411,7 +1416,7 @@ class ServerPluginHelperTest < Test::Unit::TestCase
     test 'raises error if plugin registers data callback for connection object from #server_create' do
       received = ""
       errors = []
-      @d.server_create_tls(:s, PORT, tls_options: @tls_options) do |data, conn|
+      @d.server_create_tls(:s, @port, tls_options: @tls_options) do |data, conn|
         received << data
         begin
           conn.data{|d| received << d.upcase }
@@ -1419,7 +1424,7 @@ class ServerPluginHelperTest < Test::Unit::TestCase
           errors << e
         end
       end
-      open_tls_session('127.0.0.1', PORT, cert_path: @cert_path) do |sock|
+      open_tls_session('127.0.0.1', @port, cert_path: @cert_path) do |sock|
         sock.puts "foo"
       end
       waiting(10){ sleep 0.1 until received.bytesize == 4 || errors.size == 1 }
@@ -1433,7 +1438,7 @@ class ServerPluginHelperTest < Test::Unit::TestCase
       lines = []
       responses = []
       response_completes = []
-      @d.server_create_tls(:s, PORT, tls_options: @tls_options) do |data, conn|
+      @d.server_create_tls(:s, @port, tls_options: @tls_options) do |data, conn|
         conn.on(:write_complete){|c| response_completes << true }
         buffer << data
         if idx = buffer.index("\n")
@@ -1442,7 +1447,7 @@ class ServerPluginHelperTest < Test::Unit::TestCase
         end
       end
       3.times do
-        open_tls_session('127.0.0.1', PORT, cert_path: @cert_path) do |sock|
+        open_tls_session('127.0.0.1', @port, cert_path: @cert_path) do |sock|
           sock.write "yay"
           sock.write "foo\n"
           begin
@@ -1463,7 +1468,7 @@ class ServerPluginHelperTest < Test::Unit::TestCase
       buffer = ""
       lines = []
       callback_results = []
-      @d.server_create_tls(:s, PORT, tls_options: @tls_options) do |data, conn|
+      @d.server_create_tls(:s, @port, tls_options: @tls_options) do |data, conn|
         conn.on(:close){|c| callback_results << "closed" }
         buffer << data
         if idx = buffer.index("\n")
@@ -1472,7 +1477,7 @@ class ServerPluginHelperTest < Test::Unit::TestCase
         end
       end
       3.times do
-        open_tls_session('127.0.0.1', PORT, cert_path: @cert_path) do |sock|
+        open_tls_session('127.0.0.1', @port, cert_path: @cert_path) do |sock|
           sock.write "yay"
           sock.write "foo\n"
           begin
@@ -1493,10 +1498,15 @@ class ServerPluginHelperTest < Test::Unit::TestCase
 
     sub_test_case 'TLS version connection check' do
       test "can't connect with different TLS version" do
-        @d.server_create_tls(:s, PORT, tls_options: @tls_options) do |data, conn|
+        @d.server_create_tls(:s, @port, tls_options: @tls_options) do |data, conn|
+        end
+        if defined?(OpenSSL::SSL::TLS1_3_VERSION)
+          version = :'TLS1_3'
+        else
+          version = :'TLS1_1'
         end
         assert_raise(OpenSSL::SSL::SSLError, Errno::ECONNRESET) {
-          open_tls_session('127.0.0.1', PORT, cert_path: @cert_path, version: :'TLS1_1') do |sock|
+          open_tls_session('127.0.0.1', @port, cert_path: @cert_path, version: version) do |sock|
           end
         }
       end
@@ -1504,16 +1514,23 @@ class ServerPluginHelperTest < Test::Unit::TestCase
       test "can specify multiple TLS versions by min_version/max_version" do
         omit "min_version=/max_version= is not supported" unless Fluent::TLS::MIN_MAX_AVAILABLE
 
-        opts = @tls_options.merge(min_version: :'TLS1_1', max_version: :'TLSv1_2')
-        @d.server_create_tls(:s, PORT, tls_options: opts) do |data, conn|
+        min_version = :'TLS1_2'
+        if defined?(OpenSSL::SSL::TLS1_3_VERSION)
+          max_version = :'TLS1_3'
+        else
+          max_version = :'TLS1_2'
+        end
+
+        opts = @tls_options.merge(min_version: min_version, max_version: max_version)
+        @d.server_create_tls(:s, @port, tls_options: opts) do |data, conn|
         end
         assert_raise(OpenSSL::SSL::SSLError, Errno::ECONNRESET) {
-          open_tls_session('127.0.0.1', PORT, cert_path: @cert_path, version: :'TLS1') do |sock|
+          open_tls_session('127.0.0.1', @port, cert_path: @cert_path, version: :'TLS1') do |sock|
           end
         }
-        [:'TLS1_1', :'TLS1_2'].each { |ver|
+        [min_version, max_version].each { |ver|
           assert_nothing_raised {
-            open_tls_session('127.0.0.1', PORT, cert_path: @cert_path, version: ver) do |sock|
+            open_tls_session('127.0.0.1', @port, cert_path: @cert_path, version: ver) do |sock|
             end
           }
         }
@@ -1553,7 +1570,7 @@ class ServerPluginHelperTest < Test::Unit::TestCase
   sub_test_case '#server_create_connection' do
     test 'raise error if udp is specified in proto' do
       assert_raise(ArgumentError.new("BUG: cannot create connection for UDP")) do
-        @d.server_create_connection(:myserver, PORT, proto: :udp){|c| c }
+        @d.server_create_connection(:myserver, @port, proto: :udp){|c| c }
       end
     end
 
@@ -1568,10 +1585,10 @@ class ServerPluginHelperTest < Test::Unit::TestCase
     test 'raise error if block argument is not specified or too many' do |(proto, kwargs)|
       empty_block = ->(){}
       assert_raise(ArgumentError.new("BUG: block must have just one argument")) do
-        @d.server_create_connection(:myserver, PORT, proto: proto, **kwargs, &empty_block)
+        @d.server_create_connection(:myserver, @port, proto: proto, **kwargs, &empty_block)
       end
       assert_raise(ArgumentError.new("BUG: block must have just one argument")) do
-        @d.server_create_connection(:myserver, PORT, proto: proto, **kwargs){|conn, what_is_this| [conn, what_is_this] }
+        @d.server_create_connection(:myserver, @port, proto: proto, **kwargs){|conn, what_is_this| [conn, what_is_this] }
       end
     end
 
@@ -1579,14 +1596,14 @@ class ServerPluginHelperTest < Test::Unit::TestCase
     test 'does not resolve name of client address in default' do |(proto, kwargs)|
       received = ""
       sources = []
-      @d.server_create_connection(:s, PORT, proto: proto, **kwargs) do |conn|
+      @d.server_create_connection(:s, @port, proto: proto, **kwargs) do |conn|
         sources << conn.remote_host
         conn.data do |d|
           received << d
         end
       end
       3.times do
-        open_client(proto, "127.0.0.1", PORT) do |sock|
+        open_client(proto, "127.0.0.1", @port) do |sock|
           sock.puts "yay"
         end
       end
@@ -1601,14 +1618,14 @@ class ServerPluginHelperTest < Test::Unit::TestCase
 
       received = ""
       sources = []
-      @d.server_create_connection(:s, PORT, proto: proto, resolve_name: true, **kwargs) do |conn|
+      @d.server_create_connection(:s, @port, proto: proto, resolve_name: true, **kwargs) do |conn|
         sources << conn.remote_host
         conn.data do |d|
           received << d
         end
       end
       3.times do
-        open_client(proto, "127.0.0.1", PORT) do |sock|
+        open_client(proto, "127.0.0.1", @port) do |sock|
           sock.puts "yay"
         end
       end
@@ -1621,7 +1638,7 @@ class ServerPluginHelperTest < Test::Unit::TestCase
     test 'creates a server to provide connection, which can read, write and close' do |(proto, kwargs)|
       lines = []
       buffer = ""
-      @d.server_create_connection(:s, PORT, proto: proto, **kwargs) do |conn|
+      @d.server_create_connection(:s, @port, proto: proto, **kwargs) do |conn|
         conn.data do |d|
           buffer << d
           if buffer == "x"
@@ -1637,7 +1654,7 @@ class ServerPluginHelperTest < Test::Unit::TestCase
       replied = []
       disconnecteds = []
       3.times do |i|
-        open_client(proto, "127.0.0.1", PORT) do |sock|
+        open_client(proto, "127.0.0.1", @port) do |sock|
           sock.puts "yay"
           while line = sock.readline
             replied << line
@@ -1673,7 +1690,7 @@ class ServerPluginHelperTest < Test::Unit::TestCase
       buffer = ""
       written = 0
       closed = 0
-      @d.server_create_connection(:s, PORT, proto: proto, **kwargs) do |conn|
+      @d.server_create_connection(:s, @port, proto: proto, **kwargs) do |conn|
         conn.on(:write_complete){|_conn| written += 1 }
         conn.on(:close){|_conn| closed += 1 }
         conn.on(:data) do |d|
@@ -1686,7 +1703,7 @@ class ServerPluginHelperTest < Test::Unit::TestCase
       end
       replied = []
       3.times do
-        open_client(proto, "127.0.0.1", PORT) do |sock|
+        open_client(proto, "127.0.0.1", @port) do |sock|
           sock.puts "yay"
           while line = sock.readline
             replied << line
@@ -1707,14 +1724,14 @@ class ServerPluginHelperTest < Test::Unit::TestCase
     test 'creates a server, and does not leak connections' do |(proto, kwargs)|
       buffer = ""
       closed = 0
-      @d.server_create_connection(:s, PORT, proto: proto, **kwargs) do |conn|
+      @d.server_create_connection(:s, @port, proto: proto, **kwargs) do |conn|
         conn.on(:close){|_c| closed += 1 }
         conn.on(:data) do |d|
           buffer << d
         end
       end
       3.times do
-        open_client(proto, "127.0.0.1", PORT) do |sock|
+        open_client(proto, "127.0.0.1", @port) do |sock|
           sock.puts "yay"
         end
       end
@@ -1727,7 +1744,7 @@ class ServerPluginHelperTest < Test::Unit::TestCase
     test 'will refuse more connect requests after stop, but read data from sockets already connected, in non-shared server' do |(proto, kwargs)|
       connected = false
       begin
-        open_client(proto, "127.0.0.1", PORT) do |sock|
+        open_client(proto, "127.0.0.1", @port) do |sock|
           # expected behavior is connection refused...
           connected = true
         end
@@ -1737,7 +1754,7 @@ class ServerPluginHelperTest < Test::Unit::TestCase
       assert_false connected
 
       received = ""
-      @d.server_create_connection(:s, PORT, proto: proto, shared: false, **kwargs) do |conn|
+      @d.server_create_connection(:s, @port, proto: proto, shared: false, **kwargs) do |conn|
         conn.on(:data) do |data|
           received << data
           conn.write "ack\n"
@@ -1745,7 +1762,7 @@ class ServerPluginHelperTest < Test::Unit::TestCase
       end
 
       th0 = Thread.new do
-        open_client(proto, "127.0.0.1", PORT) do |sock|
+        open_client(proto, "127.0.0.1", @port) do |sock|
           sock.puts "yay"
           sock.readline
         end
@@ -1759,7 +1776,7 @@ class ServerPluginHelperTest < Test::Unit::TestCase
       ending = false
 
       th1 = Thread.new do
-        open_client(proto, "127.0.0.1", PORT) do |sock|
+        open_client(proto, "127.0.0.1", @port) do |sock|
           sleeping = true
           sleep 0.1 until stopped
           sock.puts "yay"
@@ -1782,7 +1799,7 @@ class ServerPluginHelperTest < Test::Unit::TestCase
 
       th2 = Thread.new do
         begin
-          open_client(proto, "127.0.0.1", PORT) do |sock|
+          open_client(proto, "127.0.0.1", @port) do |sock|
             sock.puts "foo"
           end
           false # failed

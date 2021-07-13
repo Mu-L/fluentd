@@ -1,8 +1,11 @@
 Fluentd: Open-Source Log Collector
 ===================================
-Travis CI:
+GitHub Actions:
 
-[<img src="https://travis-ci.org/fluent/fluentd.svg" />](https://travis-ci.org/fluent/fluentd) [![Code Climate](https://codeclimate.com/github/fluent/fluentd/badges/gpa.svg)](https://codeclimate.com/github/fluent/fluentd)
+[![Testing on Ubuntu](https://github.com/fluent/fluentd/actions/workflows/linux-test.yaml/badge.svg?branch=master)](https://github.com/fluent/fluentd/actions/workflows/linux-test.yaml)
+[![Testing on Windows](https://github.com/fluent/fluentd/actions/workflows/windows-test.yaml/badge.svg?branch=master)](https://github.com/fluent/fluentd/actions/workflows/windows-test.yaml)
+[![Testing on macOS](https://github.com/fluent/fluentd/actions/workflows/macos-test.yaml/badge.svg?branch=master)](https://github.com/fluent/fluentd/actions/workflows/macos-test.yaml)
+[![Code Climate](https://codeclimate.com/github/fluent/fluentd/badges/gpa.svg)](https://codeclimate.com/github/fluent/fluentd)
 [![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/1189/badge)](https://bestpractices.coreinfrastructure.org/projects/1189)
 [![FOSSA Status](https://app.fossa.io/api/projects/git%2Bhttps%3A%2F%2Fgithub.com%2Ffluent%2Ffluentd.svg?type=shield)](https://app.fossa.io/projects/git%2Bhttps%3A%2F%2Fgithub.com%2Ffluent%2Ffluentd?ref=badge_shield)
 
@@ -22,9 +25,9 @@ An event consists of *tag*, *time* and *record*. Tag is a string separated with 
 
 Use Case | Description | Diagram
 -------- | ------------|:---------:
-Centralizing Apache/Nginx Server Logs | Fluentd can be used to tail access/error logs and transport them reliably to remote systems. | <img src="https://www.fluentd.org/assets/img/recipes/elasticsearch-s3-fluentd.png" height="150"/>
+Centralizing Apache/Nginx Server Logs | Fluentd can be used to tail access/error logs and transport them reliably to remote systems. | <img src="https://www.fluentd.org/images/recipes/elasticsearch-s3-fluentd.png" height="150"/>
 Syslog Alerting | Fluentd can "grep" for events and send out alerts. | <img src="https://www.fluentd.org/images/syslog-fluentd-alert.png" height="100"/>
-Mobile/Web Application Logging | Fluentd can function as middleware to enable asynchronous, scalable logging for user action events. | <img src="https://www.fluentd.org/assets/img/datasources/asynchronous_logging.png" height="150"/>
+Mobile/Web Application Logging | Fluentd can function as middleware to enable asynchronous, scalable logging for user action events. | <img src="https://www.fluentd.org/images/datasources/asynchronous_logging.png" height="150"/>
 
 ## Quick Start
 
@@ -74,7 +77,7 @@ You can run specified test via `TEST` environment variable:
 - Website: https://www.fluentd.org/
 - Documentation: https://docs.fluentd.org/
 - Project repository: https://github.com/fluent
-- Discussion: https://groups.google.com/group/fluentd
+- Discussion: https://discuss.fluentd.org/
 - Slack / Community: https://slack.fluentd.org
 - Newsletters: https://www.fluentd.org/newsletter
 - Author: [Sadayuki Furuhashi](https://github.com/frsyuki)

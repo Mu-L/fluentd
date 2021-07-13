@@ -1,3 +1,4 @@
+# coding: utf-8
 require_relative '../helper'
 require 'fluent/plugin_helper/child_process'
 require 'fluent/plugin/base'
@@ -269,10 +270,12 @@ class ChildProcessTest < Test::Unit::TestCase
     Timeout.timeout(TEST_DEADLOCK_TIMEOUT) do
       ran = false
       @d.child_process_execute(:t4, "ruby -e 'Signal.trap(:TERM, nil); while sleep 0.1; puts 1; STDOUT.flush rescue nil; end'", mode: [:read]) do |io|
-        m.lock
-        ran = true
         begin
           while line = io.readline
+            unless ran
+              m.lock
+              ran = true
+            end
             ary << line
           end
         rescue
@@ -557,7 +560,7 @@ class ChildProcessTest < Test::Unit::TestCase
       proc_lines = []
       Timeout.timeout(TEST_DEADLOCK_TIMEOUT) do
         ran = false
-        @d.child_process_execute(:t14, "ruby", arguments:['-e', 'sleep 10; puts "hello"'], subprocess_name: "sleeeeeeeeeper", mode: [:read]) do |readio|
+        @d.child_process_execute(:t14, "/bin/sh", arguments:['-c', 'sleep 10; echo "hello"'], subprocess_name: "sleeeeeeeeeper", mode: [:read]) do |readio|
           m.lock
           ran = true
           pids << @d.child_process_id

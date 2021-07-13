@@ -20,6 +20,10 @@ require 'fluent/config/error'
 
 module Fluent
   module Config
+    def self.reformatted_value(type, val, opts = {}, name = nil)
+      REFORMAT_VALUE.call(type, val, opts, name)
+    end
+
     def self.size_value(str, opts = {}, name = nil)
       return nil if str.nil?
 
@@ -104,6 +108,16 @@ module Fluent
       Config.string_value(val, opts, name)
     }
 
+    def self.symbol_value(val, opts = {}, name = nil)
+      return nil if val.nil? || val.empty?
+
+      val.delete_prefix(":").to_sym
+    end
+
+    SYMBOL_TYPE = Proc.new { |val, opts = {}, name = nil|
+      Config.symbol_value(val, opts, name)
+    }
+
     def self.enum_value(val, opts = {}, name = nil)
       return nil if val.nil?
 
@@ -176,6 +190,7 @@ module Fluent
         when :bool then Config.bool_value(value, opts, name)
         when :time then Config.time_value(value, opts, name)
         when :regexp then Config.regexp_value(value, opts, name)
+        when :symbol then Config.symbol_value(value, opts, name)
         else
           raise "unknown type in REFORMAT: #{type}"
         end
@@ -186,7 +201,7 @@ module Fluent
       return nil if val.nil?
 
       param = if val.is_a?(String)
-                val.start_with?('{') ? JSON.load(val) : Hash[val.strip.split(/\s*,\s*/).map{|v| v.split(':', 2)}]
+                val.start_with?('{') ? JSON.parse(val) : Hash[val.strip.split(/\s*,\s*/).map{|v| v.split(':', 2)}]
               else
                 val
               end
@@ -213,7 +228,7 @@ module Fluent
       return nil if val.nil?
 
       param = if val.is_a?(String)
-                val.start_with?('[') ? JSON.load(val) : val.strip.split(/\s*,\s*/)
+                val.start_with?('[') ? JSON.parse(val) : val.strip.split(/\s*,\s*/)
               else
                 val
               end

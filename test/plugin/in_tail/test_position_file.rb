@@ -147,7 +147,7 @@ class IntailPositionFileTest < Test::Unit::TestCase
       write_data(@file, TEST_CONTENT)
       pf = Fluent::Plugin::TailInput::PositionFile.load(@file, false, {}, **{logger: $log})
 
-      valid_target_info = Fluent::Plugin::TailInput::TargetInfo.new('valid_path', Fluent::FileWrapper.stat(@file).ino)
+      valid_target_info = Fluent::Plugin::TailInput::TargetInfo.new('valid_path', File.stat(@file).ino)
       f = pf[valid_target_info]
       assert_equal Fluent::Plugin::TailInput::FilePositionEntry, f.class
       assert_equal 2, f.read_pos
@@ -177,7 +177,7 @@ class IntailPositionFileTest < Test::Unit::TestCase
       assert_equal 0, f.read_inode
       assert_equal 0, f.read_pos
 
-      pf[Fluent::Plugin::TailInput::TargetInfo.new('valid_path', Fluent::FileWrapper.stat(@file).ino)].update(1, 2)
+      pf[Fluent::Plugin::TailInput::TargetInfo.new('valid_path', File.stat(@file).ino)].update(1, 2)
 
       f = pf[Fluent::Plugin::TailInput::TargetInfo.new('nonexist_path', -1)]
       assert_equal 0, f.read_inode
@@ -193,7 +193,7 @@ class IntailPositionFileTest < Test::Unit::TestCase
     test 'deletes entry by path' do
       write_data(@file, TEST_CONTENT)
       pf = Fluent::Plugin::TailInput::PositionFile.load(@file, false, {}, logger: $log)
-      inode1 = Fluent::FileWrapper.stat(@file).ino
+      inode1 = File.stat(@file).ino
       target_info1 = Fluent::Plugin::TailInput::TargetInfo.new('valid_path', inode1)
       p1 = pf[target_info1]
       assert_equal Fluent::Plugin::TailInput::FilePositionEntry, p1.class
@@ -201,7 +201,7 @@ class IntailPositionFileTest < Test::Unit::TestCase
       pf.unwatch(target_info1)
       assert_equal p1.read_pos, Fluent::Plugin::TailInput::PositionFile::UNWATCHED_POSITION
 
-      inode2 = Fluent::FileWrapper.stat(@file).ino
+      inode2 = File.stat(@file).ino
       target_info2 = Fluent::Plugin::TailInput::TargetInfo.new('valid_path', inode2)
       p2 = pf[target_info2]
       assert_equal Fluent::Plugin::TailInput::FilePositionEntry, p2.class
@@ -280,6 +280,60 @@ class IntailPositionFileTest < Test::Unit::TestCase
 
       f.update(2, 11)
       assert_equal 2, f.read_inode
+    end
+  end
+
+  sub_test_case "TargetInfo equality rules" do
+    sub_test_case "== operator" do
+      def test_equal
+        t1 = Fluent::Plugin::TailInput::TargetInfo.new("test", 1234)
+        t2 = Fluent::Plugin::TailInput::TargetInfo.new("test", 1235)
+
+        assert_equal t1, t2
+      end
+
+      def test_not_equal
+        t1 = Fluent::Plugin::TailInput::TargetInfo.new("test", 1234)
+        t2 = Fluent::Plugin::TailInput::TargetInfo.new("test2", 1234)
+
+        assert_not_equal t1, t2
+      end
+    end
+
+    sub_test_case "eql? method" do
+      def test_eql?
+        t1 = Fluent::Plugin::TailInput::TargetInfo.new("test", 1234)
+        t2 = Fluent::Plugin::TailInput::TargetInfo.new("test", 5321)
+
+        assert do
+          t1.eql? t2
+        end
+      end
+
+      def test_not_eql?
+        t1 = Fluent::Plugin::TailInput::TargetInfo.new("test2", 1234)
+        t2 = Fluent::Plugin::TailInput::TargetInfo.new("test3", 1234)
+
+        assert do
+          !t1.eql? t2
+        end
+      end
+    end
+
+    sub_test_case "hash" do
+      def test_equal
+        t1 = Fluent::Plugin::TailInput::TargetInfo.new("test", 1234)
+        t2 = Fluent::Plugin::TailInput::TargetInfo.new("test", 7321)
+
+        assert_equal t1.hash, t2.hash
+      end
+
+      def test_not_equal
+        t1 = Fluent::Plugin::TailInput::TargetInfo.new("test", 1234)
+        t2 = Fluent::Plugin::TailInput::TargetInfo.new("test2", 1234)
+
+        assert_not_equal t1.hash, t2.hash
+      end
     end
   end
 end
